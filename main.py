@@ -1,12 +1,25 @@
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-from PIL import Image, ImageTk
 import os
+import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox
 
-class ObjectDetectionApp:
+from PIL import Image, ImageTk
+
+from recognize import recognize_objects
+
+if getattr(sys, 'frozen', False):
+    # Nếu đang chạy từ tệp .exe
+    base_path = sys._MEIPASS
+else:
+    # Nếu đang phát triển (không phải .exe)
+    base_path = os.path.dirname(os.path.abspath(__file__))
+
+icon_path = os.path.join(base_path, 'icon.ico')
+
+class ObjectRecognitionApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Object Detection Application")
+        self.root.title("Object Recognition Application")
         self.root.geometry("900x600")
         self.root.configure(bg="#f0f0f0")  # Nền xám nhạt
 
@@ -26,26 +39,23 @@ class ObjectDetectionApp:
         control_frame = tk.Frame(main_frame, bg="#d9d9d9", bd=2, relief=tk.RIDGE, width=250)
         control_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=10, pady=10)
 
-        # Category Label
-        category_label = tk.Label(control_frame, text="Select Object Category:", bg="#d9d9d9", font=("Arial", 12, "bold"))
-        category_label.pack(pady=(30, 5))
+        # Results Label
+        results_label = tk.Label(control_frame, text="Recognition Results:", bg="#d9d9d9", font=("Arial", 12, "bold"))
+        results_label.pack(pady=(30, 5))
 
-        # Combobox for categories
-        self.category_var = tk.StringVar()
-        self.categories = ["Person", "Car", "Dog", "Cat", "Bird"]
-        self.category_combo = ttk.Combobox(control_frame, textvariable=self.category_var, values=self.categories, width=18, state="readonly")
-        self.category_combo.pack(pady=5)
-        self.category_combo.current(0)  # Chọn mặc định mục đầu tiên
+        # Textbox for results
+        self.results_text = tk.Text(control_frame, height=10, width=30, wrap=tk.WORD, state="disabled", font=("Arial", 10))
+        self.results_text.pack(pady=5)
 
         # Open File Button
         self.open_button = tk.Button(control_frame, text="Open Image", font=("Arial", 11, "bold"), fg="white", bg="#007BFF",
                                      activebackground="#0056b3", relief=tk.RAISED, width=18, command=self.open_file)
         self.open_button.pack(pady=(40, 10))
 
-        # Detect Button
-        self.detect_button = tk.Button(control_frame, text="Detect Object", font=("Arial", 11, "bold"), fg="white", bg="#28a745",
-                                       activebackground="#1e7e34", relief=tk.RAISED, width=18, command=self.detect_objects)
-        self.detect_button.pack(pady=(10, 50))
+        # Recognize Button
+        self.recognize_button = tk.Button(control_frame, text="Recognize Object", font=("Arial", 11, "bold"), fg="white", bg="#28a745",
+                                          activebackground="#1e7e34", relief=tk.RAISED, width=18, command=self.recognize_objects)
+        self.recognize_button.pack(pady=(10, 50))
 
         # Initialize variables
         self.current_image_path = None
@@ -83,27 +93,30 @@ class ObjectDetectionApp:
 
             # Update window title with filename
             filename = os.path.basename(image_path)
-            self.root.title(f"Object Detection - {filename}")
+            self.root.title(f"Object Recognition - {filename}")
 
         except Exception as e:
             self.image_label.config(text=f"Error loading image: {e}", image="")
 
-    def detect_objects(self):
+    def recognize_objects(self):
         if not self.current_image_path:
             messagebox.showinfo("Info", "Please open an image file first.")
             return
 
-        selected_category = self.category_var.get()
-        if not selected_category:
-            messagebox.showinfo("Info", "Please select an object category.")
-            return
-
-        # Hiển thị thông báo giả lập
-        messagebox.showinfo("Detection", f"Detecting {selected_category} in the image...")
+        try:
+            # Call the function from recognize.py
+            results = recognize_objects(self.current_image_path)
+            self.results_text.config(state="normal")
+            self.results_text.delete(1.0, tk.END)
+            self.results_text.insert(tk.END, results)
+            self.results_text.config(state="disabled")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to recognize objects: {e}")
 
 def main():
     root = tk.Tk()
-    app = ObjectDetectionApp(root)
+    app = ObjectRecognitionApp(root)
+    root.iconbitmap(icon_path)
     root.mainloop()
 
 if __name__ == "__main__":

@@ -2,4 +2,4 @@
 SwinTransformerUsing
 ![alt text](image.png)
 
-Download : mask_rcnn_swint_T_coco17.pth from https://github.com/xiaohu2015/nndet2
+Download : pretrained model : https://huggingface.co/microsoft/swin-base-patch4-window7-224
